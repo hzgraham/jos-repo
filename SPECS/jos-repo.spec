@@ -1,5 +1,5 @@
 Name:		jos-repo
-Version:	1.0.0
+Version:	1.0.1
 Release:	1%{?dist}
 Summary:	package repository rpm
 
@@ -26,8 +26,10 @@ echo "Build OK"
 %install
 mkdir -p $RPM_BUILD_ROOT/var/www/html/JOS/stable/6.4
 mkdir -p $RPM_BUILD_ROOT/var/www/html/JOS/unstable/6.4
+mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
 install -p -m 0755 RPM-GPG-KEY-JOS-STABLE $RPM_BUILD_ROOT/var/www/html/JOS/stable/6.4
 install -p -m 0755 RPM-GPG-KEY-JOS-UNSTABLE $RPM_BUILD_ROOT/var/www/html/JOS/unstable/6.4
+install -p -m 0600 iptables $RPM_BUILD_ROOT/etc/sysconfig
 
 %post
 mkdir -p /var/www/html/JOS/stable/6.4
@@ -36,6 +38,11 @@ service httpd start
 chkconfig httpd on
 createrepo /var/www/html/JOS/stable/6.4
 createrepo /var/www/html/JOS/unstable/6.4
+
+/sbin/iptables -F
+/sbin/iptables-restore < /etc/sysconfig/iptables
+/sbin/service iptables save
+/sbin/service iptables restart
 
 clear
 echo "Reboot for the changes to take effect"
@@ -49,7 +56,11 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root,-)
 /var/www/html/JOS/stable/6.4/RPM-GPG-KEY-JOS-STABLE
 /var/www/html/JOS/unstable/6.4/RPM-GPG-KEY-JOS-UNSTABLE
+/etc/sysconfig/iptables
 
 %changelog
+*  Sun Sep 08 2013 - hgraham@redhat.com
+ - added iptables configurations
+
 *  Sat Sep 07 2013 - hgraham@redhat.com
  - initial build
